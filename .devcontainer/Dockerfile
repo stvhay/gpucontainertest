@@ -84,4 +84,6 @@ RUN     echo "which tox >/dev/null || uv tool install tox --with tox-uv" >> ~/.b
 RUN     echo "alias tox='tox --workdir=$HOME/.tox'" >> ~/.bashrc
 RUN     echo "cd app" >> ~/.bashrc
 
+COPY --chown=ubuntu:ubuntu . /home/ubuntu/app/
+
 CMD [ "sleep", "infinity" ]
