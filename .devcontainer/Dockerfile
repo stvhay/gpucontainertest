@@ -1,13 +1,15 @@
 FROM nvidia/cuda:12.9.0-base-ubuntu24.04
 
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive && yes | unminimize 2>&1 
-
 ENV LANG="C.UTF-8"
+ENV DEBIAN_FRONTEND=noninteractive
+ENV SHELL=/bin/bash
+ENV DOCKER_BUILDKIT=1
+
+RUN yes | unminimize 2>&1
 
 # Install basic build tools
-RUN     apt-get update \
-    &&  apt-get upgrade -y \
-    &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+RUN     apt-get update &&  apt-get upgrade -y \
+    &&  apt-get install -y --no-install-recommends \
             make unzip git build-essential swig3.0 unixodbc-dev libpq-dev \
             default-libmysqlclient-dev moreutils rsync zip libgdiplus jq \
             python3-setuptools-whl python3-pip-whl libc6 libgcc1 libgssapi-krb5-2 \
@@ -15,35 +17,35 @@ RUN     apt-get update \
             libunwind8 sqlite3 libsqlite3-dev software-properties-common tk-dev \
             uuid-dev curl gettext inotify-tools \
     &&  add-apt-repository universe \
-    &&  apt-get update && apt-get upgrade -y
+    &&  apt-get update && apt-get upgrade -y \
+    &&  apt-get clean -y \
+    &&  rm -rf /var/lib/apt/lists/*
 
 # Verify expected build and debug tools are present
-RUN     DEBIAN_FRONTEND=noninteractive apt-get -y install \
+RUN     apt-get update && apt-get upgrade -y \
+    &&  apt-get install -y --no-install-recommends \
             build-essential cmake cppcheck valgrind clang lldb llvm gdb python3-dev \
-    &&  DEBIAN_FRONTEND=noninteractive apt-get install -yq \
+    &&  apt-get install -yq \
             vim vim-doc xtail software-properties-common libsecret-1-dev \
-    &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    &&  apt-get install -y --no-install-recommends \
             libnss3 libnspr4 libatk-bridge2.0-0 libatk1.0-0 libx11-6 \
             libpangocairo-1.0-0 libx11-xcb1 libcups2 libxcomposite1 libxdamage1 \
             libxfixes3 libpango-1.0-0 libgbm1 libgtk-3-0 \
-    && mkdir -p "/usr/local/etc/vscode-dev-containers/" \
-    && touch /usr/local/etc/vscode-dev-containers/first-notice.txt
-
-# Default to bash shell (other shells available at /usr/bin/fish and /usr/bin/zsh)
-ENV SHELL=/bin/bash \
-    DOCKER_BUILDKIT=1
-
-# Install and setup fish
-RUN     apt-get install -yq fish \
-    &&  FISH_PROMPT="function fish_prompt\n    set_color green\n    echo -n (whoami)\n    set_color normal\n    echo -n \":\"\n    set_color blue\n    echo -n (pwd)\n    set_color normal\n    echo -n \"> \"\nend\n" \
-    &&  printf "$FISH_PROMPT" >> /etc/fish/functions/fish_prompt.fish \
-    &&  printf "if type code-insiders > /dev/null 2>&1; and not type code > /dev/null 2>&1\n  alias code=code-insiders\nend" >> /etc/fish/conf.d/code_alias.fish
-
-# Remove scripts now that we're done with them
-RUN     rm -rf /tmp/scripts \
-    &&  apt-get autoremove -y \
+    &&  mkdir -p "/usr/local/etc/vscode-dev-containers/" \
+    &&  touch /usr/local/etc/vscode-dev-containers/first-notice.txt \
     &&  apt-get clean -y \
     &&  rm -rf /var/lib/apt/lists/*
+
+# Install and setup fish
+RUN     apt-get update &&  apt-get upgrade -y \
+    &&  apt-get install -yq --no-install-recommends fish \
+    &&  FISH_PROMPT="function fish_prompt\n    set_color green\n    echo -n (whoami)\n    set_color normal\n    echo -n \":\"\n    set_color blue\n    echo -n (pwd)\n    set_color normal\n    echo -n \"> \"\nend\n" \
+    &&  printf "$FISH_PROMPT" >> /etc/fish/functions/fish_prompt.fish \
+    &&  printf "if type code-insiders > /dev/null 2>&1; and not type code > /dev/null 2>&1\n  alias code=code-insiders\nend" >> /etc/fish/conf.d/code_alias.fish \
+    &&  apt-get autoremove -y \
+    &&  apt-get clean -y \
+    &&  rm -rf /var/lib/apt/lists/* \
+    &&  rm -rf /tmp/scripts
 
 # Mount for docker-in-docker 
 VOLUME [ "/var/lib/docker" ]
@@ -66,7 +68,7 @@ ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 ENV CUDA_HOME=/usr/local/cuda
 
 RUN     apt-get update && apt-get upgrade -y \
-    &&  apt-get install -y \
+    &&  apt-get install -y --no-install-recommends \
             bash curl wget \
             python3 python3-pip python3-venv \
     &&  apt-get clean -y \
