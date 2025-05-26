@@ -8,7 +8,8 @@ on:
     - cron: '0 0 * * *'  # daily at midnight UTC
 
 env:
-  IMAGE_NAME: stvhy/gpucontainer
+  IMAGE_NAME_DOCKERHUB: stvhy/gpucontainer
+  IMAGE_NAME_GHCR: ghcr.io/${{ github.repository_owner }}/gpucontainer
 
 jobs:
   build-and-push:
@@ -23,14 +24,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Extract metadata
-        id: meta
+      - name: Extract metadata (Docker Hub)
+        id: meta-dockerhub
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME_DOCKERHUB }}
+          tags: |
+            type=schedule
+            type=sha
+
+      - name: Extract metadata (GHCR)
+        id: meta-ghcr
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME_GHCR }}
           tags: |
             type=schedule
             type=sha
@@ -44,7 +61,9 @@ jobs:
           push: true
           provenance: mode=max
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ steps.meta.outputs.tags }}
+            ${{ env.IMAGE_NAME_DOCKERHUB }}:latest
+            ${{ steps.meta-dockerhub.outputs.tags }}
+            ${{ env.IMAGE_NAME_GHCR }}:latest
+            ${{ steps.meta-ghcr.outputs.tags }}
           cache-from: type=gha,scope=${{ github.workflow }}
           cache-to: type=gha,mode=max,scope=${{ github.workflow }}
