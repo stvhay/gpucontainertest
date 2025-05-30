@@ -1,5 +1,7 @@
 # gpucontainertest
 
+[![gpucontainer](https://github.com/stvhay/gpucontainertest/actions/workflows/gpucontainer.yml/badge.svg)](https://github.com/stvhay/gpucontainertest/actions/workflows/gpucontainer.yml)
+
 This is just a simple bare project structure for VS Code that includes a CUDA-
 enabled Docker image meeting VS Code Dev Container requirements.
 
