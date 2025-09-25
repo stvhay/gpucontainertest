@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.9.0-base-ubuntu24.04
+FROM nvidia/cuda:13.0.1-base-ubuntu24.04
 
 ENV LANG="C.UTF-8"
 ENV DEBIAN_FRONTEND=noninteractive
